@@ -7,19 +7,87 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
+        /* ===== TEMAS DINÁMICOS ===== */
         :root {
             --bg: #05060a; --card: #12141c; --primary: #00ffa3; --secondary: #00d1ff;
             --text: #ffffff; --text-dim: #828596; --border: rgba(255, 255, 255, 0.08);
             --nav-bg: rgba(18, 20, 28, 0.95);
             --toast-bg: rgba(0,0,0,0.9);
+            --accent-glow: #00ffa3;
         }
         body.light-mode {
             --bg: #f0f2f5; --card: #ffffff; --text: #1a1a1b; --text-dim: #65676b;
             --border: rgba(0, 0, 0, 0.1); --nav-bg: rgba(255, 255, 255, 0.95);
-            --toast-bg: rgba(0,0,0,0.85);
+            --toast-bg: rgba(0,0,0,0.85); --primary: #00a86b; --secondary: #0077b6;
         }
+        body.theme-blue {
+            --bg: #f0f7ff; --card: #ffffff; --primary: #1877f2; --secondary: #00c6ff;
+            --text: #1c1e21; --text-dim: #65676b; --border: #dddfe2;
+            --nav-bg: rgba(255,255,255,0.98); --accent-glow: #1877f2;
+        }
+        body.theme-purple {
+            --bg: #1a1025; --card: #2d1b3a; --primary: #c77dff; --secondary: #9d4edd;
+            --text: #f8f0ff; --text-dim: #b8a9cc; --border: #4a2c5e;
+            --nav-bg: #2d1b3ae0; --accent-glow: #c77dff;
+        }
+        body.theme-pink {
+            --bg: #2d1c2a; --card: #442b3a; --primary: #ff9ecd; --secondary: #ff6ec7;
+            --text: #fff0f7; --text-dim: #d6b0c4; --border: #6e3e5c;
+            --nav-bg: #442b3ad9; --accent-glow: #ff9ecd;
+        }
+        body.theme-red {
+            --bg: #1e0f0f; --card: #2e1a1a; --primary: #ff4d4d; --secondary: #ff8a5c;
+            --text: #fff0f0; --text-dim: #d4a6a6; --border: #6e3a3a;
+            --nav-bg: #2e1a1ae6; --accent-glow: #ff4d4d;
+        }
+        body.theme-orange {
+            --bg: #1f140a; --card: #332013; --primary: #ffb347; --secondary: #ff7b00;
+            --text: #fff3e6; --text-dim: #d9b38c; --border: #6e4a2e;
+            --nav-bg: #332013e6; --accent-glow: #ffb347;
+        }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; min-height: 100vh; transition: 0.3s; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); 
+            margin: 0; padding: 0; min-height: 100vh; transition: background 0.3s, color 0.2s; 
+        }
+
+        #intro-overlay {
+            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            transition: opacity 0.5s; pointer-events: none;
+        }
+        .intro-content {
+            display: flex; align-items: center; gap: 20px; background: var(--card);
+            padding: 30px 50px; border-radius: 60px; border: 2px solid var(--primary);
+            box-shadow: 0 0 40px var(--accent-glow);
+        }
+        .intro-logo {
+            width: 80px; height: 80px; object-fit: contain;
+            animation: spin360 1.2s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+        }
+        @keyframes spin360 {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .intro-text {
+            font-size: 2.5rem; font-weight: 800; letter-spacing: 4px;
+            display: flex; gap: 2px;
+            animation: scaleText 0.6s ease-out 0.8s forwards;
+            transform: scale(1);
+        }
+        @keyframes scaleText {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); color: var(--primary); }
+            100% { transform: scale(1); }
+        }
+        .intro-letter {
+            display: inline-block; transition: color 0.15s;
+        }
+        .letter-green {
+            color: var(--primary) !important;
+            text-shadow: 0 0 10px var(--primary);
+        }
 
         .main-header { 
             display: flex; justify-content: space-between; align-items: center; 
@@ -34,8 +102,13 @@
         
         .stats-card { background: var(--card); border: 1px solid var(--border); padding: 25px; border-radius: 30px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .amount { font-size: 2.8rem; font-weight: 800; color: var(--primary); margin: 10px 0; transition: 0.2s; }
-        .chart-container { height: 160px; margin-top: 15px; position: relative; }
+        .chart-container { height: 180px; margin-top: 5px; position: relative; display: flex; justify-content: center; align-items: center; }
         .blur-chart canvas, .blur-chart { filter: blur(8px); pointer-events: none; opacity: 0.5; }
+        .progress-percent {
+            position: absolute; font-size: 2rem; font-weight: 800; color: var(--text);
+            background: rgba(0,0,0,0.2); padding: 6px 16px; border-radius: 40px;
+            backdrop-filter: blur(4px); pointer-events: none;
+        }
 
         .input-group { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 25px; margin-bottom: 20px; }
         input, .custom-input { width: 100%; background: rgba(0,0,0,0.05); border: 1px solid var(--border); padding: 15px; border-radius: 12px; color: var(--text); margin-bottom: 12px; font-size: 1rem; font-family: inherit; }
@@ -44,13 +117,13 @@
         .btn-danger { background: #ff4757; color: white; }
         .btn-secondary { background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid var(--border); }
 
-        .mission-card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 24px; margin-bottom: 15px; position: relative; }
+        .mission-card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 24px; margin-bottom: 15px; }
         .m-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .m-name { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .m-reach { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 12px; display: block; }
+        .m-reach { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 12px; }
         .remaining { font-size: 0.7rem; margin-top: 4px; color: var(--secondary); }
         .prog-bar { background: rgba(0,0,0,0.1); height: 10px; border-radius: 10px; overflow: hidden; margin-bottom: 15px; }
-        .prog-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67); width: 0%; }
+        .prog-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: 0.8s; width: 0%; }
         .badge-complete { background: var(--primary); color: #000; font-size: 0.6rem; padding: 2px 8px; border-radius: 20px; font-weight: bold; margin-left: 8px; }
         .m-actions { display: flex; gap: 10px; flex-wrap: wrap; }
         .m-actions input { flex: 2; min-width: 100px; margin: 0; }
@@ -66,12 +139,21 @@
         .menu-opt { width: 100%; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--border); color: var(--text); text-align: left; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .blur-val { filter: blur(6px); opacity: 0.4; user-select: none; }
         
-        .toast-notify { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--toast-bg); backdrop-filter: blur(12px); padding: 12px 20px; border-radius: 40px; font-size: 0.85rem; color: var(--primary); z-index: 3000; border: 1px solid var(--border); pointer-events: none; opacity: 0; transition: opacity 0.2s; white-space: nowrap; max-width: 90%; white-space: normal; text-align: center; }
-        hr { border-color: var(--border); margin: 15px 0; }
+        .toast-notify { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--toast-bg); backdrop-filter: blur(12px); padding: 12px 20px; border-radius: 40px; font-size: 0.85rem; color: var(--primary); z-index: 3000; border: 1px solid var(--border); pointer-events: none; opacity: 0; transition: opacity 0.2s; white-space: nowrap; max-width: 90%; }
+        .theme-selector { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+        .theme-btn { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; transition: 0.1s; }
+        .theme-btn.active { border: 4px solid var(--primary); transform: scale(1.1); }
         .edit-icon { cursor: pointer; font-size: 0.9rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 20px; }
     </style>
 </head>
-<body>
+<body class="dark-mode">
+
+<div id="intro-overlay">
+    <div class="intro-content">
+        <img src="https://cdn-icons-png.flaticon.com/512/2489/2489756.png" alt="Logo" class="intro-logo" id="intro-logo">
+        <div class="intro-text" id="intro-text">WealthFlow</div>
+    </div>
+</div>
 
 <header class="main-header">
     <div class="brand">
@@ -83,17 +165,18 @@
 
 <div class="container">
     <div class="stats-card">
-        <p style="font-size: 0.7rem; color: var(--text-dim); letter-spacing: 2px; margin: 0;">MI ALCANCIA TOTAL</p>
+        <p style="font-size: 0.7rem; color: var(--text-dim); letter-spacing: 2px; margin: 0;">PROGRESO TOTAL</p>
         <div id="total-val" class="amount">$ 0,00</div>
         <div class="chart-container" id="chart-container">
-            <canvas id="chart"></canvas>
+            <canvas id="progressChart"></canvas>
+            <div id="progress-percent" class="progress-percent">0%</div>
         </div>
     </div>
 
     <div class="input-group">
         <input type="text" id="m-name" placeholder="Ej: Ahorro para el Auto" maxlength="45">
         <input type="text" id="m-goal" class="currency" placeholder="Meta $ 0,00" oninput="maskCurrency(this)">
-        <button class="btn-action" onclick="createMission()">CREAR NUEVA MISION</button>
+        <button class="btn-action" onclick="createMission()">CREAR NUEVA MISIÓN</button>
     </div>
 
     <div id="mission-list"></div>
@@ -102,9 +185,10 @@
 <nav class="nav">
     <button class="nav-item" onclick="openModal('modal-history')"><span>📊</span>HISTORIAL</button>
     <button class="nav-item" onclick="toggleFS()"><span>⛶</span>PANTALLA</button>
-    <button class="nav-item" onclick="toggleTheme()"><span>🌓</span>ASPECTO</button>
+    <button class="nav-item" onclick="openThemeModal()"><span>🎨</span>ASPECTO</button>
 </nav>
 
+<!-- MODAL PERFIL -->
 <div id="modal-profile" class="modal" onclick="closeModals()">
     <div class="modal-body" onclick="event.stopPropagation()">
         <h2 style="margin: 0 0 20px 0; text-align: center;">Ajustes de Perfil</h2>
@@ -126,408 +210,351 @@
     </div>
 </div>
 
+<!-- MODAL HISTORIAL -->
 <div id="modal-history" class="modal" onclick="closeModals()">
     <div class="modal-body" onclick="event.stopPropagation()">
-        <h3>Ultimos Movimientos</h3>
+        <h3>Últimos Movimientos</h3>
         <div id="hist-box" style="max-height:350px; overflow-y:auto"></div>
         <button class="btn-action btn-secondary" style="margin-top:20px" onclick="closeModals()">CERRAR</button>
+    </div>
+</div>
+
+<!-- MODAL TEMAS -->
+<div id="modal-theme" class="modal" onclick="closeModals()">
+    <div class="modal-body" onclick="event.stopPropagation()">
+        <h3 style="margin-top:0">Elige un tema</h3>
+        <div class="theme-selector">
+            <div class="theme-btn" style="background:#12141c;" onclick="setTheme('dark')" title="Oscuro"></div>
+            <div class="theme-btn" style="background:#f0f2f5;" onclick="setTheme('light')" title="Claro"></div>
+            <div class="theme-btn" style="background:#1877f2;" onclick="setTheme('blue')" title="Azul Facebook"></div>
+            <div class="theme-btn" style="background:#9d4edd;" onclick="setTheme('purple')" title="Morado"></div>
+            <div class="theme-btn" style="background:#ff6ec7;" onclick="setTheme('pink')" title="Rosado"></div>
+            <div class="theme-btn" style="background:#ff4d4d;" onclick="setTheme('red')" title="Rojo Instagram"></div>
+            <div class="theme-btn" style="background:#ffb347;" onclick="setTheme('orange')" title="Naranja"></div>
+        </div>
+        <p style="font-size:0.8rem; margin-top:20px; color:var(--text-dim);">El tema se guarda automáticamente.</p>
+        <button class="btn-action btn-secondary" style="margin-top:10px" onclick="closeModals()">CERRAR</button>
     </div>
 </div>
 
 <div id="toast-msg" class="toast-notify"></div>
 
 <script>
-    // Sistema de notificaciones interno (sin alert)
-    function showToast(message, isError = false) {
-        const toast = document.getElementById('toast-msg');
-        toast.style.color = isError ? '#ff8888' : 'var(--primary)';
-        toast.innerText = message;
-        toast.style.opacity = '1';
-        setTimeout(() => { toast.style.opacity = '0'; }, 2000);
-    }
-
-    // Modal de confirmación personalizado
-    let pendingConfirmCallback = null;
-    function showConfirm(message, onConfirm) {
-        const existingConfirm = document.getElementById('custom-confirm');
-        if(existingConfirm) existingConfirm.remove();
-        
-        const modalDiv = document.createElement('div');
-        modalDiv.id = 'custom-confirm';
-        modalDiv.className = 'modal show';
-        modalDiv.style.display = 'flex';
-        modalDiv.innerHTML = `
-            <div class="modal-body" style="max-width:300px; text-align:center;">
-                <p style="margin-bottom:25px;">${message}</p>
-                <div style="display:flex; gap:12px;">
-                    <button class="btn-action btn-secondary" style="flex:1;" id="confirm-no">Cancelar</button>
-                    <button class="btn-action" style="flex:1;" id="confirm-yes">Aceptar</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modalDiv);
-        
-        const handleNo = () => { modalDiv.remove(); pendingConfirmCallback = null; };
-        const handleYes = () => { modalDiv.remove(); if(onConfirm) onConfirm(); pendingConfirmCallback = null; };
-        document.getElementById('confirm-yes').onclick = handleYes;
-        document.getElementById('confirm-no').onclick = handleNo;
-        pendingConfirmCallback = () => { modalDiv.remove(); };
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-
-    function fmt(num) {
-        return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
-    }
-    function parse(str) {
-        if (!str) return 0;
-        let cleaned = str.replace(/\./g, '').replace(',', '.');
-        let val = parseFloat(cleaned);
-        return isNaN(val) ? 0 : val;
-    }
-    function maskCurrency(el) {
-        let v = el.value.replace(/\D/g, "");
-        if (v === "") { el.value = ""; return; }
-        let n = (parseInt(v) / 100).toFixed(2);
-        el.value = fmt(n);
-    }
-
-    let data = JSON.parse(localStorage.getItem('wf_v9')) || {
-        missions: [], history: [], 
-        user: { name: 'Ahorrador', img: 'https://api.dicebear.com/7.x/bottts/svg?seed=1', private: false }
-    };
-    if (!Array.isArray(data.missions)) data.missions = [];
-    if (!Array.isArray(data.history)) data.history = [];
-    data.missions = data.missions.filter(m => m && typeof m.id === 'number' && typeof m.name === 'string' && typeof m.goal === 'number' && m.goal > 0 && typeof m.current === 'number');
-    
-    let chartObj = null;
-
-    function addHistoryEntry(message) {
-        const safeMsg = escapeHtml(message);
-        data.history.unshift({ m: safeMsg, t: new Date().toLocaleTimeString() });
-        if (data.history.length > 150) data.history.pop();
-        save();
-    }
-
-    function save() {
-        localStorage.setItem('wf_v9', JSON.stringify(data));
-        render();
-    }
-
-    function createMission() {
-        let rawName = document.getElementById('m-name').value.trim();
-        const goalRaw = document.getElementById('m-goal').value;
-        let goalVal = parse(goalRaw);
-        
-        if (!rawName) { showToast("Escribe un nombre para la mision", true); return; }
-        if (rawName.length > 45) rawName = rawName.substring(0,45);
-        if (goalVal <= 0) { showToast("La meta debe ser mayor a cero", true); return; }
-        
-        const safeName = escapeHtml(rawName);
-        const newMission = { id: Date.now(), name: safeName, goal: goalVal, current: 0 };
-        data.missions.push(newMission);
-        addHistoryEntry(`Mision creada: "${safeName}" con meta $${fmt(goalVal)}`);
-        document.getElementById('m-name').value = '';
-        document.getElementById('m-goal').value = '';
-        showToast("Mision creada exitosamente");
-        save();
-    }
-
-    function editMissionGoal(id) {
-        const mission = data.missions.find(m => m.id === id);
-        if (!mission) return;
-        const currentGoal = mission.goal;
-        const inputDiv = document.createElement('div');
-        inputDiv.className = 'modal show';
-        inputDiv.style.display = 'flex';
-        inputDiv.innerHTML = `
-            <div class="modal-body" style="max-width:300px;">
-                <h4 style="margin-bottom:15px;">Editar meta: ${mission.name}</h4>
-                <input type="text" id="edit-goal-input" class="currency" value="${fmt(currentGoal)}" oninput="maskCurrency(this)" style="margin-bottom:20px;">
-                <div style="display:flex; gap:12px;">
-                    <button class="btn-action btn-secondary" id="cancel-edit">Cancelar</button>
-                    <button class="btn-action" id="save-edit">Guardar</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(inputDiv);
-        const inputField = document.getElementById('edit-goal-input');
-        const saveBtn = document.getElementById('save-edit');
-        const cancelBtn = document.getElementById('cancel-edit');
-        
-        const closeModal = () => inputDiv.remove();
-        saveBtn.onclick = () => {
-            let newGoal = parse(inputField.value);
-            if (newGoal <= 0) { showToast("Meta invalida", true); return; }
-            if (newGoal < mission.current) { showToast(`No puedes reducir la meta por debajo del ahorro actual ($${fmt(mission.current)})`, true); return; }
-            mission.goal = newGoal;
-            addHistoryEntry(`Meta de "${mission.name}" actualizada a $${fmt(newGoal)}`);
-            save();
-            closeModal();
-            showToast("Meta actualizada");
+    (function(){
+        // ---------- DATOS ----------
+        let data = JSON.parse(localStorage.getItem('wf_v11')) || {
+            missions: [], history: [], 
+            user: { name: 'Ahorrador', img: 'https://api.dicebear.com/7.x/bottts/svg?seed=1', private: false, theme: 'dark' }
         };
-        cancelBtn.onclick = closeModal;
-    }
+        if (!Array.isArray(data.missions)) data.missions = [];
+        if (!Array.isArray(data.history)) data.history = [];
+        data.missions = data.missions.filter(m => m && typeof m.id === 'number' && typeof m.name === 'string' && typeof m.goal === 'number' && m.goal > 0 && typeof m.current === 'number');
+        
+        if (!data.user.theme) data.user.theme = 'dark';
 
-    function addMoney(id) {
-        const mission = data.missions.find(m => m.id === id);
-        if (!mission) return;
-        const inputEl = document.getElementById(`in-${id}`);
-        let amount = parse(inputEl.value);
-        if (amount <= 0) { showToast("Ingresa un monto valido mayor a cero", true); return; }
-        let remaining = mission.goal - mission.current;
-        if (amount > remaining && remaining > 0) {
-            showConfirm(`Solo faltan $${fmt(remaining)} para completar la meta. ¿Agregar exactamente $${fmt(remaining)}?`, () => {
-                amount = remaining;
-                mission.current += amount;
-                addHistoryEntry(`Abono de $${fmt(amount)} a "${mission.name}" (Total: $${fmt(mission.current)})`);
-                inputEl.value = '';
-                save();
-                showToast("Abono realizado");
+        // ¡IMPORTANTE! chartObj se declara aquí, antes de cualquier uso.
+        let chartObj = null;
+
+        // ---------- INTRO ANIMATION ----------
+        const introShown = sessionStorage.getItem('wf_intro_shown');
+        const overlay = document.getElementById('intro-overlay');
+        const introTextEl = document.getElementById('intro-text');
+        if (!introShown) {
+            overlay.style.display = 'flex';
+            const text = 'WealthFlow';
+            introTextEl.innerHTML = '';
+            [...text].forEach((char) => {
+                const span = document.createElement('span');
+                span.className = 'intro-letter';
+                span.textContent = char;
+                introTextEl.appendChild(span);
             });
-            return;
-        }
-        if (amount === 0) return;
-        mission.current += amount;
-        addHistoryEntry(`Abono de $${fmt(amount)} a "${mission.name}" (Total: $${fmt(mission.current)})`);
-        inputEl.value = '';
-        save();
-        showToast("Abono registrado");
-    }
-
-    function withdrawMoney(id) {
-        const mission = data.missions.find(m => m.id === id);
-        if (!mission) return;
-        const inputEl = document.getElementById(`in-${id}`);
-        let amount = parse(inputEl.value);
-        if (amount <= 0) { showToast("Ingresa un monto valido para retirar", true); return; }
-        if (amount > mission.current) { showToast(`No puedes retirar mas de lo ahorrado ($${fmt(mission.current)})`, true); return; }
-        mission.current -= amount;
-        addHistoryEntry(`Retiro de $${fmt(amount)} de "${mission.name}" (Saldo: $${fmt(mission.current)})`);
-        inputEl.value = '';
-        save();
-        showToast("Retiro realizado");
-    }
-
-    function deleteMission(id) {
-        const mission = data.missions.find(m => m.id === id);
-        if (!mission) return;
-        showConfirm(`Eliminar la mision "${mission.name}"? Se perdera el progreso.`, () => {
-            addHistoryEntry(`Mision eliminada: "${mission.name}" (ahorrado $${fmt(mission.current)})`);
-            data.missions = data.missions.filter(m => m.id !== id);
-            save();
-            showToast("Mision eliminada");
-        });
-    }
-
-    function clearHistory() {
-        showConfirm("Limpiar todo el historial de movimientos? Esta accion es irreversible.", () => {
-            data.history = [];
-            addHistoryEntry("Historial limpiado por el usuario");
-            save();
-            showToast("Historial limpiado");
-        });
-    }
-    
-    function showResetConfirm() {
-        showConfirm("RESTABLECER TOTAL: se borraran todas las misiones, historial y configuracion. Esta accion no se puede deshacer.", () => {
-            data = {
-                missions: [],
-                history: [],
-                user: { name: 'Ahorrador', img: 'https://api.dicebear.com/7.x/bottts/svg?seed=1', private: false }
-            };
-            save();
-            showToast("Todos los datos han sido restablecidos");
-        });
-    }
-
-    function togglePriv() {
-        data.user.private = !data.user.private;
-        save();
-        showToast(data.user.private ? "Modo privado activado" : "Modo privado desactivado");
-    }
-
-    function render() {
-        const listDiv = document.getElementById('mission-list');
-        let totalSaved = 0;
-        listDiv.innerHTML = '';
-        
-        data.missions.forEach(mission => {
-            totalSaved += mission.current;
-            const percent = mission.goal > 0 ? Math.min((mission.current / mission.goal) * 100, 100) : 0;
-            const isCompleted = mission.current >= mission.goal;
-            const blurClass = data.user.private ? 'blur-val' : '';
-            const remainingAmount = mission.goal - mission.current;
-            const remainingText = remainingAmount > 0 ? `Faltan: $${fmt(remainingAmount)}` : 'Meta alcanzada';
-            
-            const card = document.createElement('div');
-            card.className = 'mission-card';
-            card.innerHTML = `
-                <div class="m-header">
-                    <div class="m-name">
-                        ${escapeHtml(mission.name)}
-                        ${isCompleted ? '<span class="badge-complete">COMPLETADA</span>' : ''}
-                        <span class="edit-icon" onclick="editMissionGoal(${mission.id})">✎</span>
-                    </div>
-                    <button onclick="deleteMission(${mission.id})" style="background:none; border:none; color:#ff8888; cursor:pointer; font-size:1.2rem;">🗑</button>
-                </div>
-                <div class="m-reach ${blurClass}">
-                    $ ${fmt(mission.current)} de $ ${fmt(mission.goal)}
-                </div>
-                <div class="remaining ${blurClass}">${remainingText}</div>
-                <div class="prog-bar"><div class="prog-fill" style="width:${percent}%"></div></div>
-                <div class="m-actions">
-                    <input type="text" id="in-${mission.id}" oninput="maskCurrency(this)" placeholder="$ 0,00">
-                    <button class="btn-action" style="padding:12px;" onclick="addMoney(${mission.id})">AGREGAR</button>
-                    <button class="btn-action btn-secondary" style="background:#ff5e5e; color:white;" onclick="withdrawMoney(${mission.id})">RETIRAR</button>
-                </div>
-            `;
-            listDiv.appendChild(card);
-        });
-        
-        const totalEl = document.getElementById('total-val');
-        if (data.user.private) {
-            totalEl.innerText = '••••••';
-            totalEl.classList.add('blur-val');
+            setTimeout(() => {
+                document.querySelectorAll('.intro-letter').forEach((l, i) => {
+                    setTimeout(() => l.classList.add('letter-green'), i * 100);
+                });
+            }, 900);
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    sessionStorage.setItem('wf_intro_shown', 'true');
+                }, 500);
+            }, 2200);
         } else {
-            totalEl.innerText = `$ ${fmt(totalSaved)}`;
-            totalEl.classList.remove('blur-val');
+            overlay.style.display = 'none';
         }
-        
-        document.getElementById('head-avatar').src = data.user.img || 'https://api.dicebear.com/7.x/bottts/svg?seed=1';
-        document.getElementById('profile-img').src = data.user.img || 'https://api.dicebear.com/7.x/bottts/svg?seed=1';
-        document.getElementById('user-name').value = data.user.name || 'Ahorrador';
-        document.getElementById('priv-tag').innerText = data.user.private ? "ON" : "OFF";
-        
-        updateHistoryPanel();
-        updateChartSecure();
-    }
-    
-    function updateHistoryPanel() {
-        const histContainer = document.getElementById('hist-box');
-        if (!histContainer) return;
-        if (!data.history.length) {
-            histContainer.innerHTML = '<p style="text-align:center; color:var(--text-dim)">Sin movimientos registrados.</p>';
-            return;
+
+        // ---------- FUNCIONES AUXILIARES ----------
+        function showToast(msg, isErr) {
+            const toast = document.getElementById('toast-msg');
+            toast.style.color = isErr ? '#ff8888' : 'var(--primary)';
+            toast.innerText = msg;
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 2000);
         }
-        let historyHtml = '';
-        for (let entry of data.history) {
-            let msg = entry.m;
-            if (data.user.private) {
-                msg = msg.replace(/\$\s?[\d.,]+/g, '$$ ****');
+        function showConfirm(msg, onOk) {
+            const old = document.getElementById('custom-confirm');
+            if(old) old.remove();
+            const d = document.createElement('div');
+            d.id = 'custom-confirm';
+            d.className = 'modal show';
+            d.style.display = 'flex';
+            d.innerHTML = `<div class="modal-body" style="max-width:300px; text-align:center;">
+                <p>${msg}</p><div style="display:flex; gap:12px;">
+                <button class="btn-action btn-secondary" id="cf-no">Cancelar</button>
+                <button class="btn-action" id="cf-yes">Aceptar</button></div></div>`;
+            document.body.appendChild(d);
+            document.getElementById('cf-yes').onclick = () => { d.remove(); onOk(); };
+            document.getElementById('cf-no').onclick = () => d.remove();
+        }
+        function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : ''; }
+        function fmt(n) { return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n); }
+        function parse(str) { let c = str.replace(/\./g, '').replace(',', '.'); let v = parseFloat(c); return isNaN(v) ? 0 : v; }
+        window.maskCurrency = function(el) { let v = el.value.replace(/\D/g,""); if(v===""){el.value="";return;} el.value = fmt(parseInt(v)/100); };
+
+        function addHistoryEntry(msg) { 
+            data.history.unshift({ m: escapeHtml(msg), t: new Date().toLocaleTimeString() }); 
+            if(data.history.length>150) data.history.pop(); 
+        }
+
+        // ---------- APLICAR TEMA ----------
+        function applyTheme(theme) {
+            document.body.className = ''; 
+            if (theme === 'light') document.body.classList.add('light-mode');
+            else if (theme === 'blue') document.body.classList.add('theme-blue');
+            else if (theme === 'purple') document.body.classList.add('theme-purple');
+            else if (theme === 'pink') document.body.classList.add('theme-pink');
+            else if (theme === 'red') document.body.classList.add('theme-red');
+            else if (theme === 'orange') document.body.classList.add('theme-orange');
+            else document.body.classList.add('dark-mode');
+            data.user.theme = theme;
+            save();
+            showToast(`Tema ${theme} aplicado`);
+        }
+        window.setTheme = function(theme) { applyTheme(theme); closeModals(); };
+        window.openThemeModal = function() { document.getElementById('modal-theme').classList.add('show'); };
+
+        // ---------- GUARDAR Y RENDERIZAR ----------
+        function save() { 
+            localStorage.setItem('wf_v11', JSON.stringify(data)); 
+            render(); 
+        }
+
+        function updateProgressChart(saved, goal) {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            const percentEl = document.getElementById('progress-percent');
+            const container = document.getElementById('chart-container');
+            
+            let percent = goal > 0 ? (saved / goal) * 100 : 0;
+            percent = Math.min(percent, 100);
+            percentEl.textContent = `${Math.round(percent)}%`;
+
+            if (chartObj) chartObj.destroy();
+            
+            if (data.user.private || goal === 0) {
+                container.classList.add('blur-chart');
+                percentEl.style.opacity = '0.5';
+                chartObj = new Chart(ctx, { type: 'doughnut', data: { datasets: [{ data: [1], backgroundColor: ['#555'] }] }, options: { cutout: '75%', plugins: { tooltip: { enabled: false } } } });
+                return;
             }
-            historyHtml += `
-                <div style="padding:12px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; font-size:0.8rem">
-                    <span style="max-width:70%; word-break:break-word;">${escapeHtml(msg)}</span>
-                    <span style="color:var(--primary);">${entry.t}</span>
-                </div>
-            `;
-        }
-        histContainer.innerHTML = historyHtml;
-    }
-    
-    function updateChartSecure() {
-        const ctx = document.getElementById('chart').getContext('2d');
-        if (chartObj) chartObj.destroy();
-        const chartContainer = document.getElementById('chart-container');
-        
-        if (data.user.private || data.missions.length === 0) {
-            chartContainer.classList.add('blur-chart');
-            if (data.missions.length === 0) return;
+            container.classList.remove('blur-chart');
+            percentEl.style.opacity = '1';
+            
+            let fillColor;
+            if (percent <= 25) fillColor = '#ff4d4d';
+            else if (percent <= 50) fillColor = '#ffa64d';
+            else if (percent <= 75) fillColor = '#b3ff66';
+            else if (percent < 100) fillColor = '#66ff66';
+            else fillColor = '#00ffa3';
+            
+            const remaining = Math.max(goal - saved, 0);
             chartObj = new Chart(ctx, {
                 type: 'doughnut',
-                data: { labels: ['Privado'], datasets: [{ data: [1], backgroundColor: ['#444'], borderWidth: 0 }] },
-                options: { plugins: { legend: { display: false }, tooltip: { enabled: false } }, cutout: '75%', responsive: true }
+                data: {
+                    labels: ['Ahorrado', 'Restante'],
+                    datasets: [{
+                        data: [saved, remaining],
+                        backgroundColor: [fillColor, 'rgba(128,128,128,0.15)'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '75%',
+                    responsive: true, maintainAspectRatio: true,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: $${fmt(ctx.raw)}` } } }
+                }
             });
-            return;
         }
-        chartContainer.classList.remove('blur-chart');
-        if (data.missions.length === 0) return;
-        const labels = data.missions.map(m => escapeHtml(m.name));
-        const values = data.missions.map(m => m.current);
-        chartObj = new Chart(ctx, {
-            type: 'doughnut',
-            data: { labels: labels, datasets: [{ data: values, backgroundColor: ['#00ffa3', '#00d1ff', '#7000ff', '#ff3e3e', '#ffbb00', '#ffa500'], borderWidth: 0 }] },
-            options: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: $${fmt(ctx.raw)}` } } }, cutout: '75%', responsive: true, maintainAspectRatio: false }
-        });
-    }
-    
-    function uploadImage(input) {
-        const file = input.files[0];
-        if (!file) return;
-        if (file.size > 2 * 1024 * 1024) { showToast("La imagen no puede superar 2MB", true); return; }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            data.user.img = e.target.result;
+
+        function updateHistoryPanel() {
+            const box = document.getElementById('hist-box');
+            if (!box) return;
+            if (!data.history.length) { box.innerHTML = '<p style="text-align:center; color:var(--text-dim)">Sin movimientos.</p>'; return; }
+            let html = '';
+            data.history.forEach(e => {
+                let msg = e.m;
+                if (data.user.private) msg = msg.replace(/\$\s?[\d.,]+/g, '$$ ****');
+                html += `<div style="padding:12px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; font-size:0.8rem">
+                    <span>${escapeHtml(msg)}</span><span style="color:var(--primary);">${e.t}</span></div>`;
+            });
+            box.innerHTML = html;
+        }
+
+        function render() {
+            const listDiv = document.getElementById('mission-list');
+            let totalSaved = 0, totalGoal = 0;
+            data.missions.forEach(m => { totalSaved += m.current; totalGoal += m.goal; });
+            
+            listDiv.innerHTML = '';
+            data.missions.forEach(m => {
+                const percent = m.goal>0 ? Math.min((m.current/m.goal)*100,100) : 0;
+                const blur = data.user.private ? 'blur-val' : '';
+                const remaining = m.goal - m.current;
+                const remText = remaining>0 ? `Faltan: $${fmt(remaining)}` : 'Meta alcanzada';
+                const completed = m.current >= m.goal;
+                const card = document.createElement('div');
+                card.className = 'mission-card';
+                card.innerHTML = `
+                    <div class="m-header"><div class="m-name">${escapeHtml(m.name)} ${completed?'<span class="badge-complete">COMPLETADA</span>':''} <span class="edit-icon" onclick="editMissionGoal(${m.id})">✎</span></div>
+                    <button onclick="deleteMission(${m.id})" style="background:none;border:none;color:#ff8888;font-size:1.2rem;">🗑</button></div>
+                    <div class="m-reach ${blur}">$ ${fmt(m.current)} de $ ${fmt(m.goal)}</div>
+                    <div class="remaining ${blur}">${remText}</div>
+                    <div class="prog-bar"><div class="prog-fill" style="width:${percent}%"></div></div>
+                    <div class="m-actions">
+                        <input type="text" id="in-${m.id}" oninput="maskCurrency(this)" placeholder="$ 0,00">
+                        <button class="btn-action" onclick="addMoney(${m.id})">AGREGAR</button>
+                        <button class="btn-action btn-secondary" style="background:#ff5e5e;color:white;" onclick="withdrawMoney(${m.id})">RETIRAR</button>
+                    </div>`;
+                listDiv.appendChild(card);
+            });
+
+            const totalEl = document.getElementById('total-val');
+            if (data.user.private) {
+                totalEl.innerText = '••••••';
+                totalEl.classList.add('blur-val');
+            } else {
+                totalEl.innerText = `$ ${fmt(totalSaved)}`;
+                totalEl.classList.remove('blur-val');
+            }
+            document.getElementById('head-avatar').src = data.user.img || 'https://api.dicebear.com/7.x/bottts/svg?seed=1';
+            document.getElementById('profile-img').src = data.user.img || 'https://api.dicebear.com/7.x/bottts/svg?seed=1';
+            document.getElementById('user-name').value = data.user.name || 'Ahorrador';
+            document.getElementById('priv-tag').innerText = data.user.private ? "ON" : "OFF";
+            updateHistoryPanel();
+            updateProgressChart(totalSaved, totalGoal);
+        }
+
+        // ---------- ACCIONES DE MISIÓN ----------
+        window.createMission = function() {
+            let name = document.getElementById('m-name').value.trim();
+            let goal = parse(document.getElementById('m-goal').value);
+            if(!name) { showToast('Nombre requerido', true); return; }
+            if(goal<=0) { showToast('Meta >0', true); return; }
+            name = escapeHtml(name.substring(0,45));
+            data.missions.push({ id: Date.now(), name, goal, current:0 });
+            addHistoryEntry(`Misión "${name}" creada (meta $${fmt(goal)})`);
+            document.getElementById('m-name').value = '';
+            document.getElementById('m-goal').value = '';
             save();
-            showToast("Foto actualizada");
+            showToast('Misión creada');
         };
-        reader.readAsDataURL(file);
-    }
-    
-    function saveUser() {
-        let newName = document.getElementById('user-name').value.trim();
-        if (newName) data.user.name = escapeHtml(newName.substring(0, 30));
-        save();
-        closeModals();
-        showToast("Perfil actualizado");
-    }
-    
-    function exportData() {
-        const exportCopy = JSON.parse(JSON.stringify(data));
-        const blob = new Blob([JSON.stringify(exportCopy, null, 2)], {type: 'application/json'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `WealthFlow_Backup_${new Date().toISOString().slice(0,19)}.json`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-        addHistoryEntry("Respaldo exportado");
-        showToast("Respaldo exportado");
-    }
-    
-    function importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const imported = JSON.parse(ev.target.result);
-                if (!imported.missions || !imported.history || !imported.user) throw new Error("Estructura invalida");
-                if (!Array.isArray(imported.missions) || !Array.isArray(imported.history)) throw new Error("Formato incorrecto");
-                imported.missions = imported.missions.filter(m => m && typeof m.id === 'number' && m.name && typeof m.goal === 'number' && m.goal > 0 && typeof m.current === 'number');
-                imported.missions.forEach(m => { m.name = escapeHtml(m.name.substring(0,45)); });
-                data = imported;
-                if (data.user.private === undefined) data.user.private = false;
-                if (!data.user.img) data.user.img = 'https://api.dicebear.com/7.x/bottts/svg?seed=1';
-                save();
-                addHistoryEntry("Restauracion completada desde archivo");
-                showToast("Importacion exitosa");
-            } catch(e) { showToast("Archivo corrupto o incompatible", true); }
-            event.target.value = '';
+        window.editMissionGoal = function(id) {
+            const m = data.missions.find(x=>x.id===id); if(!m) return;
+            const div = document.createElement('div'); div.className='modal show'; div.style.display='flex';
+            div.innerHTML = `<div class="modal-body"><h4>Editar meta: ${m.name}</h4>
+                <input type="text" id="edit-goal" class="currency" value="${fmt(m.goal)}" oninput="maskCurrency(this)">
+                <div style="display:flex;gap:12px;margin-top:20px"><button class="btn-action btn-secondary" id="cancelEdit">Cancelar</button>
+                <button class="btn-action" id="saveEdit">Guardar</button></div></div>`;
+            document.body.appendChild(div);
+            document.getElementById('saveEdit').onclick = ()=>{
+                let newGoal = parse(document.getElementById('edit-goal').value);
+                if(newGoal<=0){ showToast('Inválido',true); return; }
+                if(newGoal < m.current){ showToast(`No menor a $${fmt(m.current)}`,true); return; }
+                m.goal = newGoal;
+                addHistoryEntry(`Meta de "${m.name}" actualizada a $${fmt(newGoal)}`);
+                save(); div.remove(); showToast('Meta actualizada');
+            };
+            document.getElementById('cancelEdit').onclick = ()=> div.remove();
         };
-        reader.readAsText(file);
-    }
-    
-    function openModal(id) { document.getElementById(id).classList.add('show'); }
-    function closeModals() { 
-        document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
-        if(pendingConfirmCallback) { pendingConfirmCallback(); pendingConfirmCallback = null; }
-        const customConfirm = document.getElementById('custom-confirm');
-        if(customConfirm) customConfirm.remove();
-    }
-    function toggleTheme() { document.body.classList.toggle('light-mode'); }
-    function toggleFS() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
-    
-    window.onclick = function(e) { if (e.target.classList && e.target.classList.contains('modal')) closeModals(); };
-    render();
+        window.addMoney = function(id) {
+            const m = data.missions.find(x=>x.id===id); if(!m) return;
+            const inp = document.getElementById(`in-${id}`); let amt = parse(inp.value);
+            if(amt<=0){ showToast('Monto >0',true); return; }
+            let remaining = m.goal - m.current;
+            if(amt > remaining && remaining>0) {
+                showConfirm(`Solo faltan $${fmt(remaining)}. ¿Agregar eso?`, ()=>{
+                    m.current += remaining;
+                    addHistoryEntry(`Abono $${fmt(remaining)} a "${m.name}"`);
+                    inp.value=''; save(); showToast('Abono realizado');
+                }); return;
+            }
+            m.current += amt;
+            addHistoryEntry(`Abono $${fmt(amt)} a "${m.name}"`);
+            inp.value=''; save(); showToast('Abono registrado');
+        };
+        window.withdrawMoney = function(id) {
+            const m = data.missions.find(x=>x.id===id); if(!m) return;
+            const inp = document.getElementById(`in-${id}`); let amt = parse(inp.value);
+            if(amt<=0){ showToast('Monto >0',true); return; }
+            if(amt > m.current){ showToast(`Máximo $${fmt(m.current)}`,true); return; }
+            m.current -= amt;
+            addHistoryEntry(`Retiro $${fmt(amt)} de "${m.name}"`);
+            inp.value=''; save(); showToast('Retiro realizado');
+        };
+        window.deleteMission = function(id) {
+            const m = data.missions.find(x=>x.id===id); if(!m) return;
+            showConfirm(`¿Eliminar "${m.name}"?`, ()=>{
+                addHistoryEntry(`Misión eliminada "${m.name}"`);
+                data.missions = data.missions.filter(x=>x.id!==id);
+                save(); showToast('Eliminada');
+            });
+        };
+        window.clearHistory = ()=> showConfirm('¿Limpiar historial?', ()=>{ data.history=[]; addHistoryEntry('Historial limpiado'); save(); });
+        window.showResetConfirm = ()=> showConfirm('¿Resetear TODO?', ()=>{
+            data = { missions:[], history:[], user: { name:'Ahorrador', img:'https://api.dicebear.com/7.x/bottts/svg?seed=1', private:false, theme:data.user.theme } };
+            save(); showToast('Datos reseteados');
+        });
+        window.togglePriv = ()=> { data.user.private = !data.user.private; save(); showToast(data.user.private?'Modo privado ON':'Modo privado OFF'); };
+        window.uploadImage = function(input) {
+            const f = input.files[0]; if(!f) return; if(f.size>2e6){ showToast('Imagen >2MB',true); return; }
+            const r = new FileReader(); r.onload = e => { data.user.img = e.target.result; save(); showToast('Foto actualizada'); }; r.readAsDataURL(f);
+        };
+        window.saveUser = function() {
+            let n = document.getElementById('user-name').value.trim();
+            if(n) data.user.name = escapeHtml(n.substring(0,30));
+            save(); closeModals(); showToast('Perfil guardado');
+        };
+        window.exportData = function() {
+            const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `WealthFlow_${new Date().toISOString().slice(0,19)}.json`; a.click();
+            addHistoryEntry('Respaldo exportado'); showToast('Exportado');
+        };
+        window.importData = function(ev) {
+            const f = ev.target.files[0]; if(!f) return;
+            const r = new FileReader(); r.onload = e => {
+                try{
+                    const imp = JSON.parse(e.target.result);
+                    if(!imp.missions||!imp.history||!imp.user) throw new Error();
+                    imp.missions = imp.missions.filter(m=>m.id&&m.name&&typeof m.goal=='number'&&m.goal>0);
+                    data = imp; if(!data.user.theme) data.user.theme='dark';
+                    applyTheme(data.user.theme);
+                    save(); addHistoryEntry('Datos importados'); showToast('Importación exitosa');
+                }catch{ showToast('Archivo inválido',true); }
+                ev.target.value='';
+            }; r.readAsText(f);
+        };
+
+        window.openModal = id => document.getElementById(id).classList.add('show');
+        window.closeModals = () => { document.querySelectorAll('.modal').forEach(m=>m.classList.remove('show')); };
+        window.toggleFS = ()=> { if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); };
+        window.onclick = e => { if(e.target.classList.contains('modal')) closeModals(); };
+
+        // Inicializar tema guardado y render
+        applyTheme(data.user.theme);
+        // render ya se llama dentro de applyTheme -> save -> render
+    })();
 </script>
 </body>
 </html>
